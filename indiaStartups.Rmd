@@ -1,0 +1,145 @@
+---
+title: "India_Startups"
+author: "Daniel Longo"
+date: "2/18/2018"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+library(stringr)
+library(scales)
+library(sf)
+#library(ddply)
+```
+cleen up data
+```{r}
+startup_data <- read.csv("./startup_funding.csv")
+startup_data <- startup_data[startup_data[9] != "",] #removes entires where the 9nth colomn is empty
+startup_data <- startup_data[startup_data[4] != "",]
+industries <- startup_data$IndustryVertical
+Data <- startup_data[industries %in% names(which(table(industries) > 100)), ] #removes industries where there are less than 100 entries
+Data <- Data %>% 
+  mutate(AmountInUSD = str_replace(AmountInUSD, pattern = ",", replacement =  "")) %>%  #removes ,s
+  mutate(AmountInUSD = as.numeric(AmountInUSD)) #changes type to numeric
+```
+
+```{r}
+dataByIndustry <-
+  Data %>%
+  filter(!is.na(AmountInUSD)) %>%
+  group_by(IndustryVertical) %>% 
+  summarise(mean_funding = mean(AmountInUSD))
+```
+
+Pie chart
+```{r}
+vc <- startup_data %>% 
+  filter("Seed Funding" == InvestmentType)
+
+pe <- startup_data %>% 
+  filter("Private Equity" == InvestmentType)
+
+vc_number <- length(vc$AmountInUSD)
+pe_number <- length(pe$AmountInUSD)
+
+vc_total <- sum(as.numeric(vc$AmountInUSD))
+pe_total <- sum(as.numeric(pe$AmountInUSD))
+
+vc_mean <- mean(as.numeric(vc$AmountInUSD))
+pe_mean <- mean(as.numeric(pe$AmountInUSD))
+
+blank_theme <- theme_minimal() +
+  theme(
+  axis.title.x = element_blank(),
+  axis.title.y = element_blank(),
+  panel.border = element_blank(),
+  panel.grid=element_blank(),
+  axis.ticks = element_blank(),
+  plot.title=element_text(size=14, face="bold")
+)
+
+df <- data.frame(
+
+  investmentType <- c("Venture Capital", "Private Equity"),
+  totalInvestment <- c(vc_total, pe_total)
+)
+
+sum <- sum(as.numeric(totalInvestment)) #all investments
+
+bg <- df %>% 
+  ggplot(aes(x="", y=totalInvestment, fill=investmentType)) +
+  geom_bar(width = 1, stat = "identity")
+
+pie <- bg + 
+  coord_polar("y", start=0) + 
+  blank_theme +
+  ggtitle("Sum of Startup Investments by Type") +
+  labs(fill = "Investment Type") +
+  theme(axis.text.x=element_blank()) +
+  scale_fill_brewer(palette="Dark2") +
+  geom_text(aes(label=paste(c(round(totalInvestment * 100 /sum)),"%"), collapse = " "),
+    position = position_stack(vjust = 0.5), size = 7)
+
+pie
+#for pie chart also add labels for $ value 
+```
+
+####We can obserb here how there are actually more private equity investments than seed/vc ones. Additionaly, we see that the average seed investment is greater than the average private equity investment. Hmmm. This makes me question the integrity of the way this data was labeled. 
+```{r}
+vc_mean
+vc_number
+
+pe_mean
+pe_number
+```
+
+```{r}
+consumerInternet <- startup_data[startup_data$IndustryVertical == "ConsumerInternet",]
+#eCommerce <- startup_data$IndustryVertical %>% 
+ # filter("eCommerce")
+
+#View(consumerInternet)
+#View(eCommerce)
+
+#technology <- 
+#View(dataByIndustry)
+
+#use library(sf)
+#need .rds file & read_rds()
+#geom_sf()
+
+#fundingByIndustry <- ddply(startup_data, "IndustryVehichle", numcolwise(sum))
+#FundingByIndustry <- aggregate(x = startup_data, by = list(Industry = startup_data[4],Raised = startup_data[9]), FUN = sum)
+
+#FundingByIndustry <- aggregate(x=startup_data, by = list(startup_data$IndustryVehichle), FUN = sum)
+```
+
+```{r}
+
+```
+
+
+```{r}
+#possible ways to graph 
+#fill = round
+#geom_col(position = "dodge")
+#facet_grid()
+#theme <- 
+ # axis.text.x = element_text(angle=70,hjust=1)
+
+#startup_data %>% 
+ # ggplot(aes(x=IndustryVertical)) +
+  #geom_bar() +
+  #scale_y_continuous(limit = c(0,50))
+  
+
+#future 
+#library(neiss)
+#elimenate ones count < threshhold
+```
+
+
+
+
+
