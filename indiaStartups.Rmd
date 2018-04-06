@@ -10,6 +10,7 @@ library(tidyverse)
 library(stringr)
 library(scales)
 library(sf)
+library(ggmap)
 #library(ddply)
 ```
 cleen up data
@@ -96,6 +97,7 @@ pe_number
 
 ```{r}
 consumerInternet <- startup_data[startup_data$IndustryVertical == "ConsumerInternet",]
+
 #eCommerce <- startup_data$IndustryVertical %>% 
  # filter("eCommerce")
 
@@ -116,27 +118,24 @@ consumerInternet <- startup_data[startup_data$IndustryVertical == "ConsumerInter
 ```
 
 ```{r}
+coords <- geocode(as.character(Data$CityLocation)[0:700])
+#coords = coords[coords[1] != NA]
 
+map <- get_map(location = "india", maptype = "satellite", zoom = 5)
+
+map %>% 
+  ggmap() +
+  #geom_density2d(data = coords, aes(x = lon, y = lat), size = .7) +
+  stat_density2d(data = coords, aes(x = lon, y = lat, fill = ..level.., alpha = ..level..), size = 0.01, 
+  bins = 16, geom = "polygon") + scale_fill_gradient(low = "green", high = "red") + 
+  scale_alpha(range = c(0, 0.3), guide = FALSE)
 ```
 
 
 ```{r}
-#possible ways to graph 
-#fill = round
-#geom_col(position = "dodge")
-#facet_grid()
-#theme <- 
- # axis.text.x = element_text(angle=70,hjust=1)
-
-#startup_data %>% 
- # ggplot(aes(x=IndustryVertical)) +
-  #geom_bar() +
-  #scale_y_continuous(limit = c(0,50))
-  
-
-#future 
-#library(neiss)
-#elimenate ones count < threshhold
+map %>% 
+  ggmap() +
+  geom_point(data = coords, aes(x = lon, y = lat), colour = "red", alpha = .1, size = 1)
 ```
 
 
